@@ -28,9 +28,9 @@ This is an Automated Bank Statement Downloader built with Node.js and Puppeteer.
 npm install
 
 # Run the script (examples)
-node index.js --list_accounts
-node index.js --account "Business Checking" --start_date "2025-03"
-node index.js --account "Primary Savings" --download_all
+node index.js --list-accounts
+node index.js --account "Business Checking" --timeframe 90
+node index.js --account "Primary Savings" --timeframe year
 ```
 
 ## Security Constraints

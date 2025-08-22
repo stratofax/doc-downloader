@@ -18,15 +18,12 @@ const argv = yargs(hideBin(process.argv))
     type: 'string',
     description: 'Account name to download statements from'
   })
-  .option('start-date', {
-    alias: 's',
+  .option('timeframe', {
+    alias: 't',
     type: 'string',
-    description: 'Start date for filtering (YYYY-MM format)'
-  })
-  .option('download-all', {
-    alias: 'all',
-    type: 'boolean',
-    description: 'Download all available statements (ignores date filters)'
+    description: 'Timeframe for filtering statements',
+    choices: ['30', '60', '90', 'year'],
+    default: '90'
   })
   .option('output-dir', {
     alias: 'o',
@@ -173,18 +170,25 @@ class BankStatementDownloader {
     }
   }
 
-  async applyDateFilter(startDate) {
+  async applyDateFilter(timeframe) {
     try {
-      if (startDate) {
-        this.log(`Applying date filter from: ${startDate}`);
+      if (timeframe && timeframe !== 'all') {
+        const timeframeMap = {
+          '30': 'Last 30 days',
+          '60': 'Last 60 days', 
+          '90': 'Last 90 days',
+          'year': 'Last year'
+        };
         
-        // Use "Last 90 days" for better recent data
-        await this.page.select(this.config.selectors.timeFrameDropdown, 'Last 90 days');
-        this.log('Selected "Last 90 days" timeframe');
+        const timeframeValue = timeframeMap[timeframe];
+        this.log(`Applying timeframe filter: ${timeframeValue}`);
+        
+        await this.page.select(this.config.selectors.timeFrameDropdown, timeframeValue);
+        this.log(`Selected "${timeframeValue}" timeframe`);
         
         await new Promise(resolve => setTimeout(resolve, this.config.waitTimes.elementInteraction));
       } else {
-        this.log('No specific date filter applied - using default timeframe');
+        this.log('No specific timeframe filter applied - using default');
       }
       
       // Set document type to Statements for PDF downloads
@@ -378,10 +382,8 @@ class BankStatementDownloader {
         return false;
       }
 
-      if (!argv.downloadAll && argv.startDate) {
-        if (!(await this.applyDateFilter(argv.startDate))) {
-          return false;
-        }
+      if (!(await this.applyDateFilter(argv.timeframe))) {
+        return false;
       }
 
       const downloadCount = await this.downloadStatements(argv.outputDir);

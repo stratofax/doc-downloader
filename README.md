@@ -43,19 +43,21 @@ A Node.js script that automates the downloading of bank statement PDFs from a ba
 
 4. **Download statements:**
    ```bash
-   # Download from specific date
-   node index.js --account "Business Checking" --start_date "2025-03"
+   # Download from specific timeframe (default: last 90 days)
+   node index.js --account "Business Checking" --timeframe 90
    
-   # Download all statements
-   node index.js --account "Primary Savings" --download_all
+   # Download from last 30 days
+   node index.js --account "Business Checking" --timeframe 30
+   
+   # Download from last year (maximum range)
+   node index.js --account "Business Checking" --timeframe year
    ```
 
 ## Command Line Options
 
-- `--list_accounts`: Display all available account names
-- `--account "name"`: Specify account to download from
-- `--start_date "YYYY-MM"`: Start date for filtering (downloads to present)
-- `--download_all`: Download all available statements (ignores date filters)
+- `--list-accounts`: Display all available account names
+- `--account "name"`: Specify account to download from  
+- `--timeframe <period>`: Timeframe for filtering (30, 60, 90, year) - default: 90
 
 ## Security
 
