@@ -41,6 +41,14 @@ module.exports = {
     applyButtonAlt: 'button[cbdata-reason="doccenter-apply"]',
     clearButton: 'button[cbdata-reason="doccenter-clearall"]',
     
+    // Date picker elements (for custom date range)
+    startDateInput: 'input#cbds-date-picker-document-fromDate',
+    endDateInput: 'input#cbds-date-picker-document-toDate',
+    startDateCalendarButton: 'button#cbds-date-picker-document-fromDate-cbds-datePickerDialog-toggleCalendar',
+    endDateCalendarButton: 'button#cbds-date-picker-document-toDate-cbds-datePickerDialog-toggleCalendar',
+    calendarDialog: '.cbds-c-datePickerDialog',
+    calendarDayButton: 'button[data-datepickerdialog-date]',
+    
     // Statement list and download links 
     statementList: 'table tbody',
     statementRows: 'table tbody tr',

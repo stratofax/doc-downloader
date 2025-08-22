@@ -22,8 +22,16 @@ const argv = yargs(hideBin(process.argv))
     alias: 't',
     type: 'string',
     description: 'Timeframe for filtering statements',
-    choices: ['30', '60', '90', 'year'],
+    choices: ['30', '60', '90', 'year', 'custom'],
     default: '90'
+  })
+  .option('start-date', {
+    type: 'string',
+    description: 'Start date for custom range (MM/DD/YYYY format, requires --timeframe custom)'
+  })
+  .option('end-date', {
+    type: 'string',
+    description: 'End date for custom range (MM/DD/YYYY format, requires --timeframe custom)'
   })
   .option('output-dir', {
     alias: 'o',
@@ -72,6 +80,13 @@ class BankStatementDownloader {
       });
       
       await new Promise(resolve => setTimeout(resolve, this.config.waitTimes.pageLoad));
+      
+      // Wait for key form elements to be present
+      this.log('Waiting for form elements to load...');
+      await this.page.waitForSelector(this.config.selectors.accountDropdown, { timeout: 10000 });
+      await this.page.waitForSelector(this.config.selectors.timeFrameDropdown, { timeout: 10000 });
+      await this.page.waitForSelector(this.config.selectors.documentTypeFilter, { timeout: 10000 });
+      
       this.log('Successfully navigated to document center');
       return true;
     } catch (error) {
@@ -170,9 +185,107 @@ class BankStatementDownloader {
     }
   }
 
-  async applyDateFilter(timeframe) {
+  async setCustomDate(dateInput, date) {
     try {
-      if (timeframe && timeframe !== 'all') {
+      // Click the date input field
+      await this.page.click(dateInput);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Clear existing value completely
+      await this.page.evaluate(selector => {
+        const input = document.querySelector(selector);
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+      }, dateInput);
+      
+      // Type the new date
+      await this.page.type(dateInput, date);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Press Tab to confirm the date and trigger validation
+      await this.page.keyboard.press('Tab');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Trigger change and blur events to ensure validation
+      await this.page.evaluate(selector => {
+        const input = document.querySelector(selector);
+        if (input) {
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+          input.dispatchEvent(new Event('blur', { bubbles: true }));
+        }
+      }, dateInput);
+      
+      // Verify the date was set correctly
+      const setDate = await this.page.evaluate(selector => {
+        const input = document.querySelector(selector);
+        return input ? input.value : 'NOT_FOUND';
+      }, dateInput);
+      this.log(`Verified date input value: ${setDate}`);
+      
+      return true;
+    } catch (error) {
+      this.log(`Failed to set date ${date}: ${error.message}`);
+      return false;
+    }
+  }
+
+  async applyDateFilter(timeframe, startDate, endDate) {
+    try {
+      if (timeframe === 'custom' && startDate && endDate) {
+        this.log(`Applying custom date range: ${startDate} to ${endDate}`);
+        
+        // First select "Date range" option
+        await this.page.select(this.config.selectors.timeFrameDropdown, 'Date range');
+        this.log('Selected "Date range" timeframe');
+        
+        // Verify the timeframe selection worked
+        const timeframeValue = await this.page.evaluate(selector => {
+          const select = document.querySelector(selector);
+          return select ? select.value : 'NOT_FOUND';
+        }, this.config.selectors.timeFrameDropdown);
+        this.log(`Current timeframe value after selection: ${timeframeValue}`);
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Check if date inputs are now visible
+        const startDateExists = await this.page.$(this.config.selectors.startDateInput);
+        const endDateExists = await this.page.$(this.config.selectors.endDateInput);
+        this.log(`Start date input exists: ${!!startDateExists}, End date input exists: ${!!endDateExists}`);
+        
+        if (!startDateExists || !endDateExists) {
+          this.log('Date inputs not found, waiting longer for them to appear...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+        // Set start date
+        if (!(await this.setCustomDate(this.config.selectors.startDateInput, startDate))) {
+          return false;
+        }
+        this.log(`Set start date: ${startDate}`);
+        
+        // Set end date  
+        if (!(await this.setCustomDate(this.config.selectors.endDateInput, endDate))) {
+          return false;
+        }
+        this.log(`Set end date: ${endDate}`);
+        
+        // Wait longer for date picker JavaScript to process and form validation
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        this.log('Waited for date picker form validation');
+        
+        // Check for any validation error messages
+        const errorMessages = await this.page.$$eval('.cbds-c-alert--error, .error, .invalid', elements => 
+          elements.map(el => el.textContent.trim()).filter(text => text.length > 0)
+        );
+        if (errorMessages.length > 0) {
+          this.log(`Found validation errors: ${errorMessages.join(', ')}`);
+        } else {
+          this.log('No validation errors found');
+        }
+        
+      } else if (timeframe && timeframe !== 'custom') {
         const timeframeMap = {
           '30': 'Last 30 days',
           '60': 'Last 60 days', 
@@ -274,27 +387,35 @@ class BankStatementDownloader {
       
       // Try different click approaches
       try {
-        // Method 1: Mouse click simulation with hover first
+        // Method 1: JavaScript click event (bypasses visual state issues)
+        await this.page.evaluate(selector => {
+          const button = document.querySelector(selector);
+          if (button) {
+            button.click();
+            return true;
+          }
+          return false;
+        }, this.config.selectors.applyButton);
+        this.log('JavaScript click attempted');
+        
+      } catch (error) {
+        this.log(`JavaScript click failed: ${error.message}, trying mouse click...`);
+        
+        // Method 2: Mouse click simulation
         const buttonBox = await applyButton.boundingBox();
         if (buttonBox) {
           const centerX = buttonBox.x + buttonBox.width / 2;
           const centerY = buttonBox.y + buttonBox.height / 2;
           
-          // Hover first, then click
           await this.page.mouse.move(centerX, centerY);
           await new Promise(resolve => setTimeout(resolve, 100));
           await this.page.mouse.click(centerX, centerY);
-          this.log('Mouse hover and click attempted');
+          this.log('Mouse click attempted');
         } else {
-          throw new Error('Could not get button bounding box');
+          // Method 3: Direct puppeteer click
+          await applyButton.click();
+          this.log('Direct click attempted');
         }
-        
-      } catch (error) {
-        this.log(`Mouse click failed: ${error.message}, trying direct click...`);
-        
-        // Method 2: Direct click
-        await applyButton.click();
-        this.log('Direct click attempted');
       }
       
       await new Promise(resolve => setTimeout(resolve, this.config.waitTimes.filterApplication));
@@ -382,7 +503,15 @@ class BankStatementDownloader {
         return false;
       }
 
-      if (!(await this.applyDateFilter(argv.timeframe))) {
+      // Validate custom date range requirements
+      if (argv.timeframe === 'custom') {
+        if (!argv.startDate || !argv.endDate) {
+          console.error('Custom timeframe requires both --start-date and --end-date');
+          return false;
+        }
+      }
+
+      if (!(await this.applyDateFilter(argv.timeframe, argv.startDate, argv.endDate))) {
         return false;
       }
 
