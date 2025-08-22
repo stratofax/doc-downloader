@@ -65,7 +65,7 @@ module.exports = {
   waitTimes: {
     pageLoad: 3000,
     filterApplication: 2000,
-    downloadStart: 1000,
+    downloadStart: 2000,
     elementInteraction: 500
   }
 };

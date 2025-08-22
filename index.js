@@ -465,6 +465,9 @@ class BankStatementDownloader {
           await link.click();
           await new Promise(resolve => setTimeout(resolve, this.config.waitTimes.downloadStart));
           
+          // Add extra pause between downloads to ensure each PDF completes
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
           downloadCount++;
         } catch (error) {
           console.error(`Failed to download statement ${i + 1}:`, error.message);
