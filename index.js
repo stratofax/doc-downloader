@@ -31,7 +31,7 @@ const argv = yargs(hideBin(process.argv))
   })
   .option('end-date', {
     type: 'string',
-    description: 'End date for custom range (MM/DD/YYYY format, requires --timeframe custom)'
+    description: 'End date for custom range (MM/DD/YYYY format, defaults to today if not provided)'
   })
   .option('output-dir', {
     alias: 'o',
@@ -505,9 +505,16 @@ class BankStatementDownloader {
 
       // Validate custom date range requirements
       if (argv.timeframe === 'custom') {
-        if (!argv.startDate || !argv.endDate) {
-          console.error('Custom timeframe requires both --start-date and --end-date');
+        if (!argv.startDate) {
+          console.error('Custom timeframe requires --start-date');
           return false;
+        }
+        
+        // If end date not provided, use today's date
+        if (!argv.endDate) {
+          const today = new Date();
+          argv.endDate = `${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getDate().toString().padStart(2, '0')}/${today.getFullYear()}`;
+          this.log(`End date not provided, using today: ${argv.endDate}`);
         }
       }
 
