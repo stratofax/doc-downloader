@@ -21,7 +21,7 @@ The tool has been fully implemented and tested with Citizens Bank's Document Cen
 ## Completed Features
 
 1. **✅ Account Management**: Lists and selects specific bank accounts from dropdown UI
-2. **✅ Multiple Date Filtering Options**: 
+2. **✅ Multiple Date Filtering Options**:
    - Preset timeframes (30, 60, 90 days, year)
    - Custom date ranges with start-date and optional end-date
 3. **✅ Robust Download Handling**: 4-second intervals between downloads to prevent skipping
@@ -54,22 +54,26 @@ for account in "OPEX" "INCOME" "PROFIT"; do node index.js --account "$account" -
 ## Technical Implementation Details
 
 ### Browser Setup
+
 - **Tested Browsers**: Chrome, Brave Browser
 - **Launch Command**: `chrome.exe --remote-debugging-port=9222` or `brave.exe --remote-debugging-port=9222`
 - **Connection**: Script connects to `http://127.0.0.1:9222`
 
 ### Citizens Bank Integration
+
 - **Target URL**: `https://www.citizensbankonline.com/olb-root/home/document-center`
 - **Configuration File**: `config/citizens-bank.js` contains all CSS selectors
 - **Form Handling**: 3-second waits for account selection, date picker validation
 - **Apply Button**: Uses JavaScript click to bypass `aria-disabled` visual states
 
 ### Download Strategy
+
 - **Timing**: 2-second initial wait + 2-second pause between downloads (4 seconds total)
 - **Reliability**: Prevents PDF download skipping that occurred with faster timing
 - **Success Rate**: Consistently downloads all available statements without misses
 
 ### Date Handling
+
 - **Custom Ranges**: Supports MM/DD/YYYY format for date inputs
 - **Auto End-Date**: When end-date not provided, automatically uses today's date
 - **Date Picker**: Handles Citizens Bank's complex date picker UI with proper event triggering
@@ -77,7 +81,7 @@ for account in "OPEX" "INCOME" "PROFIT"; do node index.js --account "$account" -
 ## Solved Technical Challenges
 
 1. **Form Validation Timing**: Citizens Bank requires 3-second waits after account selection
-2. **Apply Button Issues**: `aria-disabled="true"` bypassed using JavaScript click events  
+2. **Apply Button Issues**: `aria-disabled="true"` bypassed using JavaScript click events
 3. **Date Picker Complexity**: Implemented proper focus, typing, and validation event handling
 4. **Download Reliability**: Added 4-second intervals to prevent missed PDFs
 5. **Page Loading**: Added proper waiting for form elements before interaction
