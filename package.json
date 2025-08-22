@@ -1,0 +1,16 @@
+{
+  "name": "bank-statement-downloader",
+  "version": "1.0.0",
+  "description": "Automated Bank Statement Downloader for Citizens Bank",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["puppeteer", "automation", "bank", "statements", "citizens"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^24.9.0",
+    "yargs": "^17.7.2"
+  }
+}
