@@ -33,27 +33,50 @@ Successfully implemented and tested with Citizens Bank. All core features are wo
 
 ## ⚡ Quick Start
 
-1. **Set up authenticated browser session:**
+1. **Install dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+2. **Set up authenticated browser session:**
+
    ```bash
    # Close all browser instances first, then launch with debugging
    chrome.exe --remote-debugging-port=9222
    # OR for Brave Browser:
    brave.exe --remote-debugging-port=9222
    
-   # Navigate to Citizens Bank and log in manually
+   # OR for Brave on the Mac
+   /Applications/Brave\ Browser.app/Contents/MacOS/Brave\ Browser --remote-debugging-port=9222 --user-data-dir=/tmp/brave-debug
    ```
 
-2. **Install dependencies:**
+3. Navigate to Citizens Bank and log in:
+
    ```bash
-   npm install
+   # Go to https://www.citizensbankonline.com/
+   # Log in manually
+   # Navigate to Document Center (https://www.citizensbankonline.com/olb-root/home/document-center)
    ```
 
-3. **List available accounts:**
+4. Test the script (in a new terminal window):
+
+   ```bash
+   # List available accounts
+   node index.js --list-accounts
+
+   # Download statements for a specific account
+   node index.js --account "PROFIT 1" --start-date "2025-01"
+   ```
+
+5. **List available accounts:**
+
    ```bash
    node index.js --list-accounts
    ```
 
-4. **Download statements:**
+6. **Download statements:**
+
    ```bash
    # Preset timeframes
    node index.js --account "PAYROLL" --timeframe 90
@@ -83,6 +106,7 @@ Successfully implemented and tested with Citizens Bank. All core features are wo
 ## 🛡️ Security
 
 This tool prioritizes security by:
+
 - ✅ **Never storing or handling login credentials** (username, password, MFA)
 - ✅ **Using your manual authentication session** (you control the login)
 - ✅ **Operating through browser remote debugging** (read-only access)
@@ -114,15 +138,18 @@ This tool prioritizes security by:
 ## 🔧 Troubleshooting
 
 **Browser Connection Issues:**
+
 - Ensure browser launched with `--remote-debugging-port=9222`
 - Close all browser instances before launching with debug flag
 - Verify you're logged into Citizens Bank before running script
 
 **Missing PDFs:**
+
 - Downloads use 4-second intervals for reliability
 - Check your browser's default download folder
 - Ensure sufficient time between bulk operations
 
 **Account Selection:**
+
 - Use `--list-accounts` to see exact account names as they appear in the UI
 - Account names are case-sensitive and must match exactly
